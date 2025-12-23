@@ -1,0 +1,19 @@
+use ark_bn254::{Fr, G1Projective};
+
+pub struct Proof {
+    pub a_commitment: G1Projective,
+    pub b_commitment: G1Projective,
+    pub c_commitment: G1Projective,
+    pub z_commitment: G1Projective,
+    pub t_lo_commitment: G1Projective,
+    pub t_mid_commitment: G1Projective,
+    pub t_hi_commitment: G1Projective,
+    pub w_z_commitment: G1Projective,
+    pub w_zw_commitment: G1Projective,
+    pub a_opened: Fr,
+    pub b_opened: Fr,
+    pub c_opened: Fr,
+    pub s1_opened: Fr,
+    pub s2_opened: Fr,
+    pub z_w_opened: Fr
+}
