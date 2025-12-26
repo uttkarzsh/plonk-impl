@@ -1,4 +1,5 @@
 use ark_bn254::{Fr, G1Projective};
+use crate::constants::{N};
 
 pub struct Proof {
     pub a_commitment: G1Projective,
@@ -20,6 +21,7 @@ pub struct Proof {
 
 impl Proof {
     pub fn generate_proof() -> Self {
-        Proof
+        let transcript: FiatShamir = FiatShamir::new();
+        let omega: Fr = Fr::get_root_of_unity(N).unwrap();
     }
 }
