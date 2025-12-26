@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod constants;
 mod proof;
 mod verifier;
@@ -11,15 +13,15 @@ use verifier::{verify_proof};
 use constants::{L};
 
 fn main() {
-    let pub_inputs: [Fr; L] = [];
-    let proof: Proof = Proof::generate_proof();
+    // let pub_inputs: [Fr; L] = [];
+    // let proof: Proof = Proof::generate_proof();
 
-    let verification_successful: bool = verify_proof(&proof, &pub_inputs);
+    // let verification_successful: bool = verify_proof(&proof, &pub_inputs);
 
-    if verification_successful {
-        println!("witness correct yay");
-    } else {
-        println!("wrong witness lol");
-    }
+    // if verification_successful {
+    //     println!("witness correct yay");
+    // } else {
+    //     println!("wrong witness lol");
+    // }
 }
 
