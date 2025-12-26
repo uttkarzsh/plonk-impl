@@ -8,12 +8,18 @@ pub struct Proof {
     pub t_lo_commitment: G1Projective,
     pub t_mid_commitment: G1Projective,
     pub t_hi_commitment: G1Projective,
-    pub w_z_commitment: G1Projective,
-    pub w_zw_commitment: G1Projective,
+    pub w_zeta_commitment: G1Projective,
+    pub w_zeta_omega_commitment: G1Projective,
     pub a_opened: Fr,
     pub b_opened: Fr,
     pub c_opened: Fr,
     pub s1_opened: Fr,
     pub s2_opened: Fr,
-    pub z_w_opened: Fr
+    pub z_omega_opened: Fr
+}
+
+impl Proof {
+    pub fn generate_proof() -> Self {
+        Proof
+    }
 }
