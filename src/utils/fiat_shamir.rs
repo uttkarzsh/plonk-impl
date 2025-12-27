@@ -1,6 +1,7 @@
 use blake2::{Blake2s256, Digest};
-use ark_ff::{PrimeField};
-use ark_bn254::{Fr};
+use ark_serialize::CanonicalSerialize;
+use ark_ff::{PrimeField, BigInteger};
+use ark_bn254::{Fr, G1Projective};
 
 pub struct FiatShamir {
     transcript: Vec<u8>
