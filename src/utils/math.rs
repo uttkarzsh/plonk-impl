@@ -2,10 +2,10 @@ use ark_bn254::{Fr};
 use ark_ff::Field;
 
 
-pub fn add<const N: usize>(a: &[Fr; N], b: &[Fr; N]) -> [Fr; N]{
-    let mut arr: [Fr; N] = [Fr::from(0u64); N];
-    for i in 0..N{
-        arr[i] = a[i] + b[i];
+pub fn add<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
+    let mut arr: [Fr; N] = *a;
+    for i in 0..M{
+        arr[i] += b[i];
     }
     arr
 }
@@ -50,7 +50,7 @@ pub fn arr_sum<const N: usize>(arr: &[Fr; N]) -> Fr{
     sum
 }
 
-fn polynomial_multiplication<const N: usize, const M: usize, const L: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; L]{
+pub fn polynomial_multiplication<const N: usize, const M: usize, const L: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; L]{
     let mut product: [Fr; L] = [Fr::from(0u64); L];
     for i in 0..N {
         for j in 0..M{
@@ -60,7 +60,7 @@ fn polynomial_multiplication<const N: usize, const M: usize, const L: usize>(a: 
     product
 }
 
-fn lagrange_interpolation<const N: usize>(xs: &[Fr; N], ys: &[Fr; N]) -> [Fr; N] {
+pub fn lagrange_interpolation<const N: usize>(xs: &[Fr; N], ys: &[Fr; N]) -> [Fr; N] {
     let mut result = [Fr::from(0u64); N];
     
     for i in 0..N {

@@ -6,7 +6,7 @@ use std::sync::LazyLock;
 use rand::thread_rng;
 
 pub struct SRS{
-    pub ptau_g1: [G1Projective; N],
+    pub ptau_g1: [G1Projective; N+5],
     pub ptau_g2: [G2Projective; 2],
 }
 
@@ -15,8 +15,8 @@ impl SRS{
         let mut rng = thread_rng();
         let tau: Fr = Fr::rand(&mut rng);
 
-        let mut ptau_g1: [G1Projective; N] = [*G1; N];
-        for i in 0..N {
+        let mut ptau_g1: [G1Projective; N+5] = [*G1; N+5];
+        for i in 0..N+5 {
             ptau_g1[i] = *G1 * tau.pow([i as u64]);
         }
 

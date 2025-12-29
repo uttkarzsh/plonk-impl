@@ -4,11 +4,14 @@ use rand::thread_rng;
 use crate::constants::*;
 use crate::trusted_setup::{GENERATED_SRS};
 use crate::utils::fiat_shamir::{FiatShamir};
+use crate::utils::math::*;
+use crate::utils::curve_ops::*;
+use crate::witness::{Witness};
 
 pub struct Proof {
-    // pub a_commitment: G1Projective,
-    // pub b_commitment: G1Projective,
-    // pub c_commitment: G1Projective,
+    pub a_commitment: G1Projective,
+    pub b_commitment: G1Projective,
+    pub c_commitment: G1Projective,
     // pub z_commitment: G1Projective,
     // pub t_lo_commitment: G1Projective,
     // pub t_mid_commitment: G1Projective,
@@ -24,10 +27,11 @@ pub struct Proof {
 }
 
 impl Proof {
-    pub fn generate_proof(WITNESS: &[Fr; 3*N], pub_inputs: &[Fr; L]) -> Self {
+    pub fn generate_proof(witness: &Witness, pub_inputs: &[Fr; L]) -> Self {
         let mut rng = thread_rng();
         let transcript: FiatShamir = FiatShamir::new();     //transcript for fiat shamir
         let omega: Fr = Fr::get_root_of_unity(N as u64).unwrap();   //nth root of unity
+        let domain: [Fr; N] = get_domain();     //domain (powers of omega)
 
         //blinding scalars
         let mut b: [Fr; 9] = [Fr::from(1u64); 9];
@@ -36,11 +40,23 @@ impl Proof {
         }
 
         //Round 1
+        let a_blind_zh: [Fr; N+2] = polynomial_multiplication(&[b[1], b[0]], &ZH_X);
+        let b_blind_zh: [Fr; N+2] = polynomial_multiplication(&[b[3], b[2]], &ZH_X);
+        let c_blind_zh: [Fr; N+2] = polynomial_multiplication(&[b[5], b[4]], &ZH_X);
+
+        let ax: [Fr; N+2] = add(&a_blind_zh, &lagrange_interpolation(&domain, &witness.a_x));
+        let bx: [Fr; N+2] = add(&b_blind_zh, &lagrange_interpolation(&domain, &witness.b_x));
+        let cx: [Fr; N+2] = add(&c_blind_zh, &lagrange_interpolation(&domain, &witness.c_x));
+
+        let a_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &ax));
+        let b_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &bx));
+        let c_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &cx));
+        
         //Round 2
         //Round 3
         //Round 4
         //Round 5
 
-        Self {}
+        Self { a_commitment, b_commitment, c_commitment}
     }
 }
