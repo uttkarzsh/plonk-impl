@@ -27,8 +27,10 @@ impl FiatShamir {
         self.update(&bytes);
     }
 
-    pub fn challenge(&self) -> Fr {
+    pub fn challenge(&mut self) -> Fr {
         let hash = Blake2s256::digest(&self.transcript);
-        Fr::from_le_bytes_mod_order(&hash)
+        let chal = Fr::from_le_bytes_mod_order(&hash);
+        self.append_fr(&chal);
+        chal
     }
 }
