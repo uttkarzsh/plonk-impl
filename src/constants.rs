@@ -39,9 +39,9 @@ pub static Q_C: LazyLock<[Fr; N]> = LazyLock::new(||[Fr::from(0i64), Fr::from(0i
 pub static ZH_X: LazyLock<[Fr; N+1]> = LazyLock::new(|| calculate_zh_x());
 pub static DOMAIN: LazyLock<[Fr; N]> = LazyLock::new(|| get_domain());
 
-static SIGMA_A: LazyLock<[Fr; N]> = LazyLock::new(|| [DOMAIN[1], DOMAIN[2] * *K1, DOMAIN[2] * *K2, DOMAIN[3] * *K2]);
-static SIGMA_B: LazyLock<[Fr; N]> = LazyLock::new(|| [DOMAIN[2], DOMAIN[1] * *K1, DOMAIN[1] * *K2, DOMAIN[0] * *K1]);
-static SIGMA_C: LazyLock<[Fr; N]> = LazyLock::new(|| [DOMAIN[3] * *K1, DOMAIN[3], DOMAIN[0], DOMAIN[0] * *K2]);
+static SIGMA_A: LazyLock<[Fr; N]> = LazyLock::new(|| [DOMAIN[0], DOMAIN[1] * *K1, DOMAIN[1] * *K2, DOMAIN[2] * *K2]);
+static SIGMA_B: LazyLock<[Fr; N]> = LazyLock::new(|| [DOMAIN[1], DOMAIN[0] * *K1, DOMAIN[0] * *K2, DOMAIN[3] * *K2]);
+static SIGMA_C: LazyLock<[Fr; N]> = LazyLock::new(|| [DOMAIN[2] * *K1, DOMAIN[2], DOMAIN[3], DOMAIN[3] * *K1]);
 
 pub static S_A: LazyLock<[Fr; N]> = LazyLock::new(|| lagrange_interpolation(&DOMAIN, &SIGMA_A));
 pub static S_B: LazyLock<[Fr; N]> = LazyLock::new(|| lagrange_interpolation(&DOMAIN, &SIGMA_B));

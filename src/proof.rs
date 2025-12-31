@@ -13,7 +13,7 @@ pub struct Proof {
     pub a_commitment: G1Projective,
     pub b_commitment: G1Projective,
     pub c_commitment: G1Projective,
-    // pub z_commitment: G1Projective,
+    pub z_commitment: G1Projective,
     // pub t_lo_commitment: G1Projective,
     // pub t_mid_commitment: G1Projective,
     // pub t_hi_commitment: G1Projective,
@@ -62,8 +62,11 @@ impl Proof {
         let gamma: Fr = transcript.challenge();
 
         let blind_zh: [Fr; N+3] = polynomial_multiplication(&[b[8], b[7], b[6]], &ZH_X);
+        let zx: [Fr; N+3] = add(&blind_zh, &get_permutation_polynomial(&witness, beta, gamma));
 
+        let z_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &zx));     
 
+        transcript.append_g1(&z_commitment);   
 
         ///Round 3
         let alpha: Fr = transcript.challenge();
@@ -85,6 +88,6 @@ impl Proof {
         ///Round 5
         let v: Fr = transcript.challenge();
 
-        Self { a_commitment, b_commitment, c_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta }
+        Self { a_commitment, b_commitment, c_commitment, z_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta }
     }
 }

@@ -56,6 +56,41 @@ pub fn polynomial_multiplication<const N: usize, const M: usize, const L: usize>
     product
 }
 
+pub fn lagrange_poly<const N: usize>(i: usize, xs: &[Fr; N]) -> [Fr; N] {
+    assert!(i <= N);
+
+    let mut poly = [Fr::from(0u64); N];
+    poly[0] = Fr::from(1u64);
+
+    let mut denom = Fr::from(1u64);
+    for j in 0..N {
+        if i != j {
+            denom *= xs[i] - xs[j];
+        }
+    }
+    let denom_inv = denom.inverse().unwrap();
+
+    for j in 0..N {
+        if i != j {
+            let mut next = [Fr::from(0u64); N];
+            for k in 0..N {
+                if k > 0 {
+                    next[k] += poly[k - 1];
+                }
+                next[k] -= poly[k] * xs[j];
+            }
+            poly = next;
+        }
+    }
+
+    for k in 0..N {
+        poly[k] *= denom_inv;
+    }
+
+    poly
+}
+
+
 pub fn lagrange_interpolation<const N: usize>(xs: &[Fr; N], ys: &[Fr; N]) -> [Fr; N] {
     let mut result = [Fr::from(0u64); N];
     
