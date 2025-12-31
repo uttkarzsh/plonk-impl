@@ -115,3 +115,19 @@ pub fn polynomial_division<const N: usize>(px: &[Fr; N], qx: &[Fr; N], deg_p: us
     res
 }
 
+pub fn domain_pub_input<const N: usize, const M: usize>(domain:&[Fr; N]) -> [Fr; M] {
+    let mut p_domain: [Fr; M] = [Fr::from(0u32); M];
+    for i in 0..M{
+        p_domain[i] = domain[i];
+    }
+    p_domain
+}
+
+pub fn evaluate_polynomial<const N: usize>(polynomial: &[Fr; N], var: Fr) -> Fr {
+    let mut value: Fr = Fr::from(0u64);
+    for i in 0..N{
+        value += polynomial[i] * var.pow([i as u64]);
+    }
+    value
+}
+

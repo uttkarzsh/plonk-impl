@@ -6,6 +6,7 @@ use crate::trusted_setup::{GENERATED_SRS};
 use crate::utils::fiat_shamir::{FiatShamir};
 use crate::utils::math::*;
 use crate::utils::curve_ops::*;
+use crate::utils::proof_gen_utils::*;
 use crate::witness::{Witness};
 
 pub struct Proof {
@@ -18,19 +19,19 @@ pub struct Proof {
     // pub t_hi_commitment: G1Projective,
     // pub w_zeta_commitment: G1Projective,
     // pub w_zeta_omega_commitment: G1Projective,
-    // pub a_opened: Fr,
-    // pub b_opened: Fr,
-    // pub c_opened: Fr,
-    // pub s1_opened: Fr,
-    // pub s2_opened: Fr,
-    // pub z_omega_opened: Fr
+    pub a_zeta: Fr,
+    pub b_zeta: Fr,
+    pub c_zeta: Fr,
+    pub s1_zeta: Fr,
+    pub s2_zeta: Fr,
+    // pub z_omega_zeta: Fr
 }
 
 impl Proof {
     pub fn generate_proof(witness: &Witness, pub_inputs: &[Fr; L]) -> Self {
         let mut rng = thread_rng();
         let mut transcript: FiatShamir = FiatShamir::new();     //transcript for fiat shamir
-           //nth root of unity
+        let domain_pub_input: [Fr; L] = domain_pub_input(&DOMAIN);
 
         //blinding scalars
         let mut b: [Fr; 9] = [Fr::from(1u64); 9];
@@ -60,17 +61,30 @@ impl Proof {
         let beta: Fr = transcript.challenge();
         let gamma: Fr = transcript.challenge();
 
+        let blind_zh: [Fr; N+3] = polynomial_multiplication(&[b[8], b[7], b[6]], &ZH_X);
+
 
 
         ///Round 3
         let alpha: Fr = transcript.challenge();
+        let pi_x: [Fr; L] = lagrange_interpolation(&domain_pub_input, &pub_inputs);
+
+        let arithmetic_constraint_poly: [Fr; 3*N + 2] = get_arithmetic_constraint_poly(&ax, &bx, &cx, &pi_x);        
+
 
         ///Round 4
         let zeta: Fr = transcript.challenge();
 
+        let a_zeta: Fr = evaluate_polynomial(&ax, zeta);
+        let b_zeta: Fr = evaluate_polynomial(&bx, zeta);
+        let c_zeta: Fr = evaluate_polynomial(&cx, zeta);
+        let s1_zeta: Fr = evaluate_polynomial(&S_A, zeta);
+        let s2_zeta: Fr = evaluate_polynomial(&S_B, zeta);
+
+
         ///Round 5
         let v: Fr = transcript.challenge();
 
-        Self { a_commitment, b_commitment, c_commitment}
+        Self { a_commitment, b_commitment, c_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta }
     }
 }
