@@ -3,6 +3,7 @@ use ark_ff::Field;
 
 
 pub fn add<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
+    assert!(N > M);
     let mut arr: [Fr; N] = *a;
     for i in 0..M{
         arr[i] += b[i];
@@ -10,18 +11,11 @@ pub fn add<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
     arr
 }
 
-pub fn add_three_arr<const N: usize>(a: &[Fr; N], b: &[Fr; N], c: &[Fr; N]) -> [Fr; N]{
-    let mut arr: [Fr; N] = [Fr::from(0u64); N];
-    for i in 0..N{
-        arr[i] = a[i] + b[i] + c[i];
-    }
-    arr
-}
-
-pub fn sub<const N: usize>(a: &[Fr; N], b: &[Fr; N]) -> [Fr; N]{
-    let mut arr: [Fr; N] = [Fr::from(0u64); N];
-    for i in 0..N{
-        arr[i] = a[i] - b[i];
+pub fn sub<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
+    assert!(N > M);
+    let mut arr: [Fr; N] = *a;
+    for i in 0..M{
+        arr[i] -= b[i];
     }
     arr
 }
@@ -35,6 +29,7 @@ pub fn scalar_mul<const N: usize>(matrix: &[Fr; N], scalar: Fr) -> [Fr; N] {
 }
 
 pub fn hadamard_product<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; M]{
+    assert!(N>M);
     let mut arr: [Fr; M] = [Fr::from(0u64); M];
     for i in 0..M{
         arr[i] = a[i] * b[i];
@@ -51,6 +46,7 @@ pub fn arr_sum<const N: usize>(arr: &[Fr; N]) -> Fr{
 }
 
 pub fn polynomial_multiplication<const N: usize, const M: usize, const L: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; L]{
+    assert!(L == N + M - 1);
     let mut product: [Fr; L] = [Fr::from(0u64); L];
     for i in 0..N {
         for j in 0..M{
