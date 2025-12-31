@@ -1,5 +1,5 @@
 use ark_bn254::{Fr, G1Projective};
-use ark_ff::{FftField, UniformRand};
+use ark_ff::{FftField, UniformRand, Zero};
 use rand::thread_rng;
 use crate::constants::*;
 use crate::trusted_setup::{GENERATED_SRS};
@@ -14,9 +14,9 @@ pub struct Proof {
     pub b_commitment: G1Projective,
     pub c_commitment: G1Projective,
     pub z_commitment: G1Projective,
-    // pub t_lo_commitment: G1Projective,
-    // pub t_mid_commitment: G1Projective,
-    // pub t_hi_commitment: G1Projective,
+    pub t_lo_commitment: G1Projective,
+    pub t_mid_commitment: G1Projective,
+    pub t_hi_commitment: G1Projective,
     // pub w_zeta_commitment: G1Projective,
     // pub w_zeta_omega_commitment: G1Projective,
     pub a_zeta: Fr,
@@ -72,8 +72,34 @@ impl Proof {
         let alpha: Fr = transcript.challenge();
         let pi_x: [Fr; L] = lagrange_interpolation(&domain_pub_input, &pub_inputs);
 
-        let arithmetic_constraint_poly: [Fr; 3*N + 2] = get_arithmetic_constraint_poly(&ax, &bx, &cx, &pi_x);        
+        let arithmetic_constraint_poly: [Fr; 3*N + 2] = get_arithmetic_constraint_poly(&ax, &bx, &cx, &pi_x);
+        let permutation_constraint_poly: [Fr; 4*N + 6] = get_permutation_constraint_polynomial(alpha, beta, gamma, &ax, &bx, &cx, &zx);
+        let boundary_constraint_poly: [Fr; 2*N + 2] = get_boundary_constraint_poly(alpha, &zx);
 
+        let tx_zhx: [Fr; 4*N + 6] = add_three_poly(&permutation_constraint_poly, &arithmetic_constraint_poly, &boundary_constraint_poly);
+
+        let tx: [Fr; 3*N + 6] = polynomial_division(&tx_zhx, &ZH_X);
+
+        let mut t_lo: [Fr; N] = [Fr::zero(); N];
+        let mut t_mid: [Fr; N] = [Fr::zero(); N];
+        let mut t_hi: [Fr; N+6] = [Fr::zero(); N+6];
+
+        for i in 0..N {
+            t_lo[i] = tx[i];
+            t_mid[i] = tx[N + i];
+            t_hi[i] = tx[2*N + i];
+        }
+        for i in 0..6 {
+            t_hi[N + i] = tx[3*N + i];
+        }
+
+        let t_lo_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &t_lo)); 
+        let t_mid_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &t_mid)); 
+        let t_hi_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &t_hi)); 
+
+        transcript.append_g1(&t_lo_commitment);
+        transcript.append_g1(&t_mid_commitment);
+        transcript.append_g1(&t_hi_commitment);
 
         ///Round 4
         let zeta: Fr = transcript.challenge();
@@ -88,6 +114,6 @@ impl Proof {
         ///Round 5
         let v: Fr = transcript.challenge();
 
-        Self { a_commitment, b_commitment, c_commitment, z_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta }
+        Self { a_commitment, b_commitment, c_commitment, z_commitment, t_lo_commitment, t_mid_commitment, t_hi_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta }
     }
 }

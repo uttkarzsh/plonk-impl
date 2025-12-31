@@ -3,7 +3,7 @@ use ark_ff::Field;
 
 
 pub fn add<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
-    assert!(N > M);
+    assert!(N >= M);
     let mut arr: [Fr; N] = *a;
     for i in 0..M{
         arr[i] += b[i];
@@ -11,8 +11,21 @@ pub fn add<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
     arr
 }
 
+pub fn add_three_poly<const N: usize, const M: usize, const L: usize>(a: &[Fr; N], b: &[Fr; M], c: &[Fr; L]) -> [Fr; N]{
+    assert!(N >= M && N >= L);
+    let mut arr: [Fr; N] = *a;
+    for i in 0..M{
+        arr[i] += b[i];
+    }
+    for i in 0..L {
+        arr[i] += c[i];
+    }
+
+    arr
+}
+
 pub fn sub<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
-    assert!(N > M);
+    assert!(N >= M);
     let mut arr: [Fr; N] = *a;
     for i in 0..M{
         arr[i] -= b[i];
@@ -127,9 +140,14 @@ pub fn lagrange_interpolation<const N: usize>(xs: &[Fr; N], ys: &[Fr; N]) -> [Fr
 }
 
 
-pub fn polynomial_division<const N: usize>(px: &[Fr; N], qx: &[Fr; N], deg_p: usize, deg_q: usize) -> [Fr; N] {
-    let mut res: [Fr; N] = [Fr::from(0u64); N];
+pub fn polynomial_division<const N: usize, const M: usize, const L: usize>(px: &[Fr; N], qx: &[Fr; M]) -> [Fr; L] {
+    assert!(N >= M && L == N - M + 1);
+    let mut res: [Fr; L] = [Fr::from(0u64); L];
     let mut zx: [Fr; N] = *px;
+
+    let deg_p: usize = N - 1;
+    let deg_q: usize = M - 1;
+
     let mut deg_z: usize = deg_p;
     let iterations: usize = deg_p - deg_q + 1;
 
