@@ -24,7 +24,7 @@ pub struct Proof {
     pub c_zeta: Fr,
     pub s1_zeta: Fr,
     pub s2_zeta: Fr,
-    // pub z_omega_zeta: Fr
+    pub z_omega_zeta: Fr
 }
 
 impl Proof {
@@ -109,11 +109,18 @@ impl Proof {
         let c_zeta: Fr = evaluate_polynomial(&cx, zeta);
         let s1_zeta: Fr = evaluate_polynomial(&S_A, zeta);
         let s2_zeta: Fr = evaluate_polynomial(&S_B, zeta);
+        let z_omega_zeta: Fr = evaluate_polynomial(&zx, zeta * *OMEGA);
 
+        transcript.append_fr(&a_zeta);
+        transcript.append_fr(&b_zeta);
+        transcript.append_fr(&c_zeta);
+        transcript.append_fr(&s1_zeta);
+        transcript.append_fr(&s2_zeta);
+        transcript.append_fr(&z_omega_zeta);
 
         ///Round 5
         let v: Fr = transcript.challenge();
 
-        Self { a_commitment, b_commitment, c_commitment, z_commitment, t_lo_commitment, t_mid_commitment, t_hi_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta }
+        Self { a_commitment, b_commitment, c_commitment, z_commitment, t_lo_commitment, t_mid_commitment, t_hi_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta, z_omega_zeta }
     }
 }
