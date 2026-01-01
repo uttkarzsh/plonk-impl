@@ -31,7 +31,7 @@ fn get_domain() -> [Fr; N] {
 
 pub static Q_L: LazyLock<[Fr; N]> = LazyLock::new(||[Fr::from(0i64), Fr::from(0i64), Fr::from(1i64), Fr::from(1i64)]);
 pub static Q_R: LazyLock<[Fr; N]> = LazyLock::new(||[Fr::from(0i64), Fr::from(0i64), Fr::from(1i64), Fr::from(0i64)]);
-pub static Q_O: LazyLock<[Fr; N]> = LazyLock::new(||[Fr::from(0i64), Fr::from(0i64), Fr::from(-1i64), Fr::from(0i64)]);
+pub static Q_O: LazyLock<[Fr; N]> = LazyLock::new(||[Fr::from(-1i64), Fr::from(-1i64), Fr::from(-1i64), Fr::from(0i64)]);
 pub static Q_M: LazyLock<[Fr; N]> = LazyLock::new(||[Fr::from(1i64), Fr::from(1i64), Fr::from(0i64), Fr::from(0i64)]);
 pub static Q_C: LazyLock<[Fr; N]> = LazyLock::new(||[Fr::from(0i64), Fr::from(0i64), Fr::from(0i64), Fr::from(3i64)]);
 

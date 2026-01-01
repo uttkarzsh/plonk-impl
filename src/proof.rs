@@ -39,7 +39,7 @@ impl Proof {
             b[i] = Fr::rand(&mut rng);
         }
 
-        
+
         ///Round 1
         let a_blind_zh: [Fr; N+2] = polynomial_multiplication(&[b[1], b[0]], &ZH_X);
         let b_blind_zh: [Fr; N+2] = polynomial_multiplication(&[b[3], b[2]], &ZH_X);
@@ -65,7 +65,7 @@ impl Proof {
         let blind_zh: [Fr; N+3] = polynomial_multiplication(&[b[8], b[7], b[6]], &ZH_X);
         let zx: [Fr; N+3] = add(&blind_zh, &get_permutation_polynomial(&witness, beta, gamma));
 
-        let z_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &zx));     
+        let z_commitment: G1Projective = evaluate_commitment(&GENERATED_SRS.ptau_g1, &zx);
 
         transcript.append_g1(&z_commitment);   
 
@@ -95,9 +95,9 @@ impl Proof {
             t_hi[N + i] = tx[3*N + i];
         }
 
-        let t_lo_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &t_lo)); 
-        let t_mid_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &t_mid)); 
-        let t_hi_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &t_hi)); 
+        let t_lo_commitment: G1Projective = evaluate_commitment(&GENERATED_SRS.ptau_g1, &t_lo); 
+        let t_mid_commitment: G1Projective = evaluate_commitment(&GENERATED_SRS.ptau_g1, &t_mid); 
+        let t_hi_commitment: G1Projective = evaluate_commitment(&GENERATED_SRS.ptau_g1, &t_hi);
 
         transcript.append_g1(&t_lo_commitment);
         transcript.append_g1(&t_mid_commitment);
@@ -129,8 +129,8 @@ impl Proof {
         let w_zeta_x: [Fr; N+5] = get_opening_proof_poly_wz(&rx, &ax, &bx, &cx, zeta, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta, v);
         let w_zeta_omega_x : [Fr; N+2] = get_opening_proof_poly_wzomega(&zx, zeta, z_omega_zeta);
 
-        let w_zeta_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &w_zeta_x)); 
-        let w_zeta_omega_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &w_zeta_omega_x)); 
+        let w_zeta_commitment: G1Projective = evaluate_commitment(&GENERATED_SRS.ptau_g1, &w_zeta_x);
+        let w_zeta_omega_commitment: G1Projective = evaluate_commitment(&GENERATED_SRS.ptau_g1, &w_zeta_omega_x);; 
 
         transcript.append_g1(&w_zeta_commitment);
         transcript.append_g1(&w_zeta_omega_commitment);
