@@ -17,8 +17,8 @@ pub struct Proof {
     pub t_lo_commitment: G1Projective,
     pub t_mid_commitment: G1Projective,
     pub t_hi_commitment: G1Projective,
-    // pub w_zeta_commitment: G1Projective,
-    // pub w_zeta_omega_commitment: G1Projective,
+    pub w_zeta_commitment: G1Projective,
+    pub w_zeta_omega_commitment: G1Projective,
     pub a_zeta: Fr,
     pub b_zeta: Fr,
     pub c_zeta: Fr,
@@ -39,6 +39,7 @@ impl Proof {
             b[i] = Fr::rand(&mut rng);
         }
 
+        
         ///Round 1
         let a_blind_zh: [Fr; N+2] = polynomial_multiplication(&[b[1], b[0]], &ZH_X);
         let b_blind_zh: [Fr; N+2] = polynomial_multiplication(&[b[3], b[2]], &ZH_X);
@@ -67,6 +68,7 @@ impl Proof {
         let z_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &zx));     
 
         transcript.append_g1(&z_commitment);   
+
 
         ///Round 3
         let alpha: Fr = transcript.challenge();
@@ -101,6 +103,7 @@ impl Proof {
         transcript.append_g1(&t_mid_commitment);
         transcript.append_g1(&t_hi_commitment);
 
+
         ///Round 4
         let zeta: Fr = transcript.challenge();
 
@@ -118,9 +121,23 @@ impl Proof {
         transcript.append_fr(&s2_zeta);
         transcript.append_fr(&z_omega_zeta);
 
+
         ///Round 5
         let v: Fr = transcript.challenge();
+        let rx: [Fr; N+6] = get_linearisation_poly(a_zeta, b_zeta, c_zeta, alpha, beta, gamma, zeta, z_omega_zeta, s1_zeta, s2_zeta, &zx, &pi_x, &t_lo, &t_mid, &t_hi);
 
-        Self { a_commitment, b_commitment, c_commitment, z_commitment, t_lo_commitment, t_mid_commitment, t_hi_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta, z_omega_zeta }
+        let w_zeta_x: [Fr; N+5] = get_opening_proof_poly_wz(&rx, &ax, &bx, &cx, zeta, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta, v);
+        let w_zeta_omega_x : [Fr; N+2] = get_opening_proof_poly_wzomega(&zx, zeta, z_omega_zeta);
+
+        let w_zeta_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &w_zeta_x)); 
+        let w_zeta_omega_commitment: G1Projective = sum_g1_array(&hadamard_g1(&GENERATED_SRS.ptau_g1, &w_zeta_omega_x)); 
+
+        transcript.append_g1(&w_zeta_commitment);
+        transcript.append_g1(&w_zeta_omega_commitment);
+
+
+
+        //Final proof struct
+        Self { a_commitment, b_commitment, c_commitment, z_commitment, t_lo_commitment, t_mid_commitment, t_hi_commitment, w_zeta_commitment, w_zeta_omega_commitment, a_zeta, b_zeta, c_zeta, s1_zeta, s2_zeta, z_omega_zeta }
     }
 }

@@ -75,3 +75,42 @@ pub fn get_permutation_constraint_polynomial(alpha: Fr, beta: Fr, gamma: Fr, ax:
 pub fn get_boundary_constraint_poly(alpha: Fr, zx: &[Fr; N+3]) -> [Fr; 2*N + 2] {
     scalar_mul(&polynomial_multiplication(&sub(zx, &[Fr::one()]), &lagrange_poly(0, &DOMAIN)), alpha * alpha)
 }
+
+pub fn get_linearisation_poly(a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, alpha: Fr, beta: Fr, gamma: Fr, zeta: Fr, z_omega_zeta: Fr, s1_zeta: Fr, s2_zeta: Fr, zx: &[Fr; N+3], pi_x: &[Fr; L], t_lo: &[Fr; N], t_mid: &[Fr; N], t_hi: &[Fr; N+6]) -> [Fr; N+6] {
+    let arithmetic_part: [Fr; N] = add(&add_three_poly(&scalar_mul(&Q_M, a_zeta * b_zeta), &scalar_mul(&Q_L, a_zeta), &scalar_mul(&Q_R, b_zeta)), &add_three_poly(&scalar_mul(&Q_O, c_zeta), &Q_C, &[evaluate_polynomial(&pi_x, zeta)]));
+
+    let permutation_part: [Fr; N+3] = scalar_mul(&sub(&scalar_mul(&zx, (a_zeta + beta * zeta + gamma) * (b_zeta + beta * *K1 * zeta + gamma) * (c_zeta + beta * *K2 * zeta + gamma)), &scalar_mul(&add_three_poly(&scalar_mul(&S_C, beta), &[c_zeta], &[gamma]), (a_zeta + beta * s1_zeta + gamma) * (b_zeta + s2_zeta * beta + gamma) * z_omega_zeta)), alpha);
+
+    let boundary_part: [Fr; N+3] = scalar_mul(&sub(&zx, &[Fr::one()]), alpha * alpha * evaluate_polynomial(&lagrange_poly(0, &DOMAIN), zeta));
+
+    let t_part: [Fr; N+6] = scalar_mul(&add_three_poly(&scalar_mul(&t_hi, zeta.pow([2*N as u64])), &scalar_mul(&t_mid, zeta.pow([N as u64])), &t_lo), Fr::from(-1i32) * evaluate_polynomial(&ZH_X, zeta));
+
+    let rx: [Fr; N+6] = add(&add(&t_part, &boundary_part), &add(&permutation_part, &arithmetic_part));
+
+    rx
+}
+
+pub fn get_opening_proof_poly_wz(rx: &[Fr; N+6], ax: &[Fr; N+2], bx: &[Fr; N+2], cx: &[Fr; N+2], zeta: Fr, a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, s1_zeta: Fr, s2_zeta: Fr, v: Fr) -> [Fr; N+5] {
+
+    let mut numerator: [Fr; N+6] = *rx;
+    numerator = add(&numerator, &scalar_mul(&sub(&ax, &[a_zeta]), v.pow([1])));
+    numerator = add(&numerator, &scalar_mul(&sub(&bx, &[b_zeta]), v.pow([2])));
+    numerator = add(&numerator, &scalar_mul(&sub(&cx, &[c_zeta]), v.pow([3])));
+    numerator = add(&numerator, &scalar_mul(&sub(&S_A, &[s1_zeta]), v.pow([4])));
+    numerator = add(&numerator, &scalar_mul(&sub(&S_B, &[s2_zeta]), v.pow([5])));
+
+    let denom: [Fr; 2] = [Fr::from(-1i32) * zeta, Fr::one()];
+
+    let w_z: [Fr; N+5] = polynomial_division(&numerator, &denom);
+
+    w_z
+
+}
+
+pub fn get_opening_proof_poly_wzomega(zx: &[Fr; N+3], zeta: Fr, z_omega_zeta: Fr) -> [Fr; N+2] {
+    let numerator: [Fr; N+3] = sub(&zx, &[z_omega_zeta]);
+    let denom: [Fr; 2] = [Fr::from(-1i32) * zeta * *OMEGA, Fr::one()];
+
+    let w_z_omega : [Fr; N+2] = polynomial_division(&numerator, &denom);
+    w_z_omega
+}
