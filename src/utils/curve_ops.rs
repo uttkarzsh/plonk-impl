@@ -36,3 +36,7 @@ pub fn sum_g2_array<const N: usize>(arr: &[G2Projective; N])->G2Projective{
     }
     sum
 }
+
+pub fn evaluate_commitment<const N: usize, const M: usize>(a: &[G1Projective; N], b: &[Fr; M]) -> G1Projective {
+    sum_g1_array(&hadamard_g1(a, b))
+}
