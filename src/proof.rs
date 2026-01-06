@@ -31,7 +31,6 @@ impl Proof {
     pub fn generate_proof(witness: &Witness, pub_inputs: &[Fr; L]) -> Self {
         let mut rng = thread_rng();
         let mut transcript: FiatShamir = FiatShamir::new();     //transcript for fiat shamir
-        let domain_pub_input: [Fr; L] = domain_pub_input(&DOMAIN);
 
         //blinding scalars
         let mut b: [Fr; 9] = [Fr::from(1u64); 9];
@@ -39,6 +38,10 @@ impl Proof {
             b[i] = Fr::rand(&mut rng);
         }
 
+        let mut pis: [Fr; N] = [Fr::zero(); N];
+        for i in 0..L {
+            pis[i] = pub_inputs[i];
+        }
 
         ///Round 1
         let a_blind_zh: [Fr; N+2] = polynomial_multiplication(&[b[1], b[0]], &ZH_X);
@@ -72,7 +75,7 @@ impl Proof {
 
         ///Round 3
         let alpha: Fr = transcript.challenge();
-        let pi_x: [Fr; L] = lagrange_interpolation(&domain_pub_input, &pub_inputs);
+        let pi_x: [Fr; N] = lagrange_interpolation(&DOMAIN, &pis);
 
         let arithmetic_constraint_poly: [Fr; 3*N + 2] = get_arithmetic_constraint_poly(&ax, &bx, &cx, &pi_x);
         let permutation_constraint_poly: [Fr; 4*N + 6] = get_permutation_constraint_polynomial(alpha, beta, gamma, &ax, &bx, &cx, &zx);

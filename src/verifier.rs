@@ -1,5 +1,5 @@
 use ark_bn254::{Fr, G1Projective, G2Projective, Bn254};
-use ark_ff::{Field};
+use ark_ff::{Field, Zero};
 use ark_ec::{pairing::Pairing};
 use crate::constants::*;
 use crate::proof::{Proof};
@@ -36,7 +36,13 @@ pub fn verify_proof(proof: &Proof, pub_inputs: &[Fr; L]) -> bool {
     //constants generation
     let zh_zeta: Fr = evaluate_polynomial(&ZH_X, zeta);
     let l1_zeta: Fr = evaluate_polynomial(&lagrange_poly(0, &DOMAIN), zeta);
-    let pi_zeta: Fr = evaluate_polynomial(&lagrange_interpolation(&domain_pub_input(&DOMAIN), &pub_inputs), zeta);
+
+    let mut pis: [Fr; N] = [Fr::zero(); N];     //full public input polynomial
+    for i in 0..L {
+        pis[i] = pub_inputs[i];
+    }
+
+    let pi_zeta: Fr = evaluate_polynomial(&lagrange_interpolation(&DOMAIN, &pis), zeta);
 
     //G1 elements
     let q_m_g1: G1Projective = evaluate_commitment(&GENERATED_SRS.ptau_g1, &Q_M);
@@ -71,7 +77,7 @@ pub fn verify_proof(proof: &Proof, pub_inputs: &[Fr; L]) -> bool {
 
     // [E]_1
     let e_1: G1Projective = 
-        *G1 * (r_0 * Fr::from(-1i32) + v.pow([1]) * proof.a_zeta + v.pow([2]) * proof.b_zeta + v.pow([3]) * proof.c_zeta + v.pow([4]) * proof.s1_zeta + v.pow([5]) * proof.s2_zeta + proof.z_omega_zeta * u);
+        *G1 * (v.pow([1]) * proof.a_zeta + v.pow([2]) * proof.b_zeta + v.pow([3]) * proof.c_zeta + v.pow([4]) * proof.s1_zeta + v.pow([5]) * proof.s2_zeta + proof.z_omega_zeta * u - r_0);
 
 
     let lhs = Bn254::pairing(proof.w_zeta_commitment + proof.w_zeta_omega_commitment * u, GENERATED_SRS.ptau_g2[1]);

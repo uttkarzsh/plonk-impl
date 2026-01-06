@@ -15,7 +15,7 @@ pub fn get_permutation_polynomial(witness: &Witness, beta: Fr, gamma: Fr) -> [Fr
 
 
         let mut f: Fr = Fr::one();
-        for j in 0..i+1 {
+        for j in 0..i {
             let numer: Fr = 
                 (witness.a_x[j] + beta * DOMAIN[j] + gamma) * 
                 (witness.b_x[j] + beta * DOMAIN[j] * *K1 + gamma) * 
@@ -40,7 +40,7 @@ pub fn get_permutation_polynomial(witness: &Witness, beta: Fr, gamma: Fr) -> [Fr
 }
 
 //arithmetic constraint part of t(x)Z_H(x)
-pub fn get_arithmetic_constraint_poly(ax: &[Fr; N+2], bx: &[Fr; N+2], cx: &[Fr; N+2], pi_x: &[Fr; L]) -> [Fr; 3*N + 2] {
+pub fn get_arithmetic_constraint_poly(ax: &[Fr; N+2], bx: &[Fr; N+2], cx: &[Fr; N+2], pi_x: &[Fr; N]) -> [Fr; 3*N + 2] {
     let mut arithmetic_constraint_poly: [Fr; 3*N + 2] = [Fr::from(0u32); 3*N + 2];
 
     let axbx: [Fr; 2*N + 3] = polynomial_multiplication(ax, bx);
@@ -86,7 +86,7 @@ pub fn get_permutation_constraint_polynomial(alpha: Fr, beta: Fr, gamma: Fr, ax:
 
     let csxzwx: [Fr; 2*N + 4] = 
         polynomial_multiplication(
-            &add_three_poly(bx, &scalar_mul(&S_C, beta), &[gamma]), 
+            &add_three_poly(cx, &scalar_mul(&S_C, beta), &[gamma]), 
             &zwx
         );
 
@@ -108,7 +108,7 @@ pub fn get_boundary_constraint_poly(alpha: Fr, zx: &[Fr; N+3]) -> [Fr; 2*N + 2] 
         alpha * alpha)
 }
 
-pub fn get_linearisation_poly(a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, alpha: Fr, beta: Fr, gamma: Fr, zeta: Fr, z_omega_zeta: Fr, s1_zeta: Fr, s2_zeta: Fr, zx: &[Fr; N+3], pi_x: &[Fr; L], t_lo: &[Fr; N], t_mid: &[Fr; N], t_hi: &[Fr; N+6]) -> [Fr; N+6] {
+pub fn get_linearisation_poly(a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, alpha: Fr, beta: Fr, gamma: Fr, zeta: Fr, z_omega_zeta: Fr, s1_zeta: Fr, s2_zeta: Fr, zx: &[Fr; N+3], pi_x: &[Fr; N], t_lo: &[Fr; N], t_mid: &[Fr; N], t_hi: &[Fr; N+6]) -> [Fr; N+6] {
 
     let arithmetic_part: [Fr; N] = 
         add(

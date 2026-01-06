@@ -11,10 +11,10 @@ use ark_bn254::{Fr};
 use proof::{Proof};
 use verifier::{verify_proof};
 use witness::{WITNESS};
-use constants::{L};
+use constants::{L, ZH_X};
 
 fn main() {
-    let pub_inputs: [Fr; L] = [Fr::from(-4i32)];
+    let pub_inputs: [Fr; L] = [Fr::from(4i32), Fr::from(3i32)];
     let proof: Proof = Proof::generate_proof(&WITNESS, &pub_inputs);
 
     let verification_successful: bool = verify_proof(&proof, &pub_inputs);
@@ -25,4 +25,5 @@ fn main() {
         println!("wrong witness lol");
     }
 }
+
 
