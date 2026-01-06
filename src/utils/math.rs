@@ -1,19 +1,18 @@
-use ark_bn254::{Fr};
-use ark_ff::Field;
+use ark_ff::{Field as IField, Zero, One};
+use crate::types::*;
 
-
-pub fn add<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
+pub fn add<const N: usize, const M: usize>(a: &[Field; N], b: &[Field; M]) -> [Field; N]{
     assert!(N >= M);
-    let mut arr: [Fr; N] = *a;
+    let mut arr: [Field; N] = *a;
     for i in 0..M{
         arr[i] += b[i];
     }
     arr
 }
 
-pub fn add_three_poly<const N: usize, const M: usize, const L: usize>(a: &[Fr; N], b: &[Fr; M], c: &[Fr; L]) -> [Fr; N]{
+pub fn add_three_poly<const N: usize, const M: usize, const L: usize>(a: &[Field; N], b: &[Field; M], c: &[Field; L]) -> [Field; N]{
     assert!(N >= M && N >= L);
-    let mut arr: [Fr; N] = *a;
+    let mut arr: [Field; N] = *a;
     for i in 0..M{
         arr[i] += b[i];
     }
@@ -24,43 +23,26 @@ pub fn add_three_poly<const N: usize, const M: usize, const L: usize>(a: &[Fr; N
     arr
 }
 
-pub fn sub<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; N]{
+pub fn sub<const N: usize, const M: usize>(a: &[Field; N], b: &[Field; M]) -> [Field; N]{
     assert!(N >= M);
-    let mut arr: [Fr; N] = *a;
+    let mut arr: [Field; N] = *a;
     for i in 0..M{
         arr[i] -= b[i];
     }
     arr
 }
 
-pub fn scalar_mul<const N: usize>(matrix: &[Fr; N], scalar: Fr) -> [Fr; N] {
-    let mut arr: [Fr; N] = [Fr::from(0u64); N];
+pub fn scalar_mul<const N: usize>(matrix: &[Field; N], scalar: Field) -> [Field; N] {
+    let mut arr: [Field; N] = [Field::zero(); N];
     for i in 0..N{
         arr[i] = scalar * matrix[i];
     }
     arr
 }
 
-pub fn hadamard_product<const N: usize, const M: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; M]{
-    assert!(N>M);
-    let mut arr: [Fr; M] = [Fr::from(0u64); M];
-    for i in 0..M{
-        arr[i] = a[i] * b[i];
-    }
-    arr
-}
-
-pub fn arr_sum<const N: usize>(arr: &[Fr; N]) -> Fr{
-    let mut sum: Fr = Fr::from(0u64);
-    for i in 0..N{
-        sum += arr[i];
-    }
-    sum
-}
-
-pub fn polynomial_multiplication<const N: usize, const M: usize, const L: usize>(a: &[Fr; N], b: &[Fr; M]) -> [Fr; L]{
+pub fn polynomial_multiplication<const N: usize, const M: usize, const L: usize>(a: &[Field; N], b: &[Field; M]) -> [Field; L]{
     assert!(L == N + M - 1);
-    let mut product: [Fr; L] = [Fr::from(0u64); L];
+    let mut product: [Field; L] = [Field::zero(); L];
     for i in 0..N {
         for j in 0..M{
             product[j + i] += a[i] * b[j];
@@ -69,13 +51,13 @@ pub fn polynomial_multiplication<const N: usize, const M: usize, const L: usize>
     product
 }
 
-pub fn lagrange_poly<const N: usize>(i: usize, xs: &[Fr; N]) -> [Fr; N] {
+pub fn lagrange_poly<const N: usize>(i: usize, xs: &[Field; N]) -> [Field; N] {
     assert!(i <= N);
 
-    let mut poly = [Fr::from(0u64); N];
-    poly[0] = Fr::from(1u64);
+    let mut poly = [Field::zero(); N];
+    poly[0] = Field::one();
 
-    let mut denom = Fr::from(1u64);
+    let mut denom = Field::one();
     for j in 0..N {
         if i != j {
             denom *= xs[i] - xs[j];
@@ -85,7 +67,7 @@ pub fn lagrange_poly<const N: usize>(i: usize, xs: &[Fr; N]) -> [Fr; N] {
 
     for j in 0..N {
         if i != j {
-            let mut next = [Fr::from(0u64); N];
+            let mut next = [Field::zero(); N];
             for k in 0..N {
                 if k > 0 {
                     next[k] += poly[k - 1];
@@ -104,14 +86,14 @@ pub fn lagrange_poly<const N: usize>(i: usize, xs: &[Fr; N]) -> [Fr; N] {
 }
 
 
-pub fn lagrange_interpolation<const N: usize>(xs: &[Fr; N], ys: &[Fr; N]) -> [Fr; N] {
-    let mut result = [Fr::from(0u64); N];
+pub fn lagrange_interpolation<const N: usize>(xs: &[Field; N], ys: &[Field; N]) -> [Field; N] {
+    let mut result = [Field::zero(); N];
     
     for i in 0..N {
-        let mut basis = [Fr::from(0u64); N];
-        basis[0] = Fr::from(1u64);
+        let mut basis = [Field::zero(); N];
+        basis[0] = Field::one();
         
-        let mut denom = Fr::from(1u64);
+        let mut denom = Field::one();
         for j in 0..N {
             if i != j {
                 denom *= xs[i] - xs[j];
@@ -121,7 +103,7 @@ pub fn lagrange_interpolation<const N: usize>(xs: &[Fr; N], ys: &[Fr; N]) -> [Fr
         
         for j in 0..N {
             if i != j {
-                let mut new_basis = [Fr::from(0u64); N];
+                let mut new_basis = [Field::zero(); N];
                 for k in 0..N {
                     if k > 0 {
                         new_basis[k] += basis[k - 1]; 
@@ -140,10 +122,10 @@ pub fn lagrange_interpolation<const N: usize>(xs: &[Fr; N], ys: &[Fr; N]) -> [Fr
 }
 
 
-pub fn polynomial_division<const N: usize, const M: usize, const L: usize>(px: &[Fr; N], qx: &[Fr; M]) -> [Fr; L] {
+pub fn polynomial_division<const N: usize, const M: usize, const L: usize>(px: &[Field; N], qx: &[Field; M]) -> [Field; L] {
     assert!(N >= M && L == N - M + 1);
-    let mut res: [Fr; L] = [Fr::from(0u64); L];
-    let mut zx: [Fr; N] = *px;
+    let mut res: [Field; L] = [Field::zero(); L];
+    let mut zx: [Field; N] = *px;
 
     let deg_p: usize = N - 1;
     let deg_q: usize = M - 1;
@@ -152,7 +134,7 @@ pub fn polynomial_division<const N: usize, const M: usize, const L: usize>(px: &
     let iterations: usize = deg_p - deg_q + 1;
 
     for i in 0..iterations{
-        let factor: Fr = zx[deg_z] / qx[deg_q];
+        let factor: Field = zx[deg_z] / qx[deg_q];
         res[iterations - 1 - i] = factor;
 
         for j in 0..=deg_q{
@@ -164,16 +146,8 @@ pub fn polynomial_division<const N: usize, const M: usize, const L: usize>(px: &
     res
 }
 
-pub fn domain_pub_input<const N: usize, const M: usize>(domain:&[Fr; N]) -> [Fr; M] {
-    let mut p_domain: [Fr; M] = [Fr::from(0u32); M];
-    for i in 0..M{
-        p_domain[i] = domain[i];
-    }
-    p_domain
-}
-
-pub fn evaluate_polynomial<const N: usize>(polynomial: &[Fr; N], var: Fr) -> Fr {
-    let mut value: Fr = Fr::from(0u64);
+pub fn evaluate_polynomial<const N: usize>(polynomial: &[Field; N], var: Field) -> Field {
+    let mut value: Field = Field::zero();
     for i in 0..N{
         value += polynomial[i] * var.pow([i as u64]);
     }

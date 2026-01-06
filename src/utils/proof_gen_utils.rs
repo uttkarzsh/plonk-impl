@@ -1,53 +1,48 @@
-use ark_bn254::{Fr};
-use ark_ff::{Field, Zero, One};
+use ark_ff::{Field as IField, Zero, One};
+use crate::types::*;
 use crate::utils::math::*;
 use crate::constants::*;
 use crate::witness::{Witness};
 
 //z(x)for round 2 of proof generation
-pub fn get_permutation_polynomial(witness: &Witness, beta: Fr, gamma: Fr) -> [Fr; N] {
-    let l1x: [Fr; N] = lagrange_poly(0, &DOMAIN);
+pub fn get_permutation_polynomial(witness: &Witness, beta: Field, gamma: Field) -> [Field; N] {
+    let mut zx: [Field; N] = [Field::zero(); N];
+    let mut f: [Field; N+1] = [Field::zero(); N+1];
+    f[0] = Field::one();
+    for j in 0..N {
+        let numerator: Field = 
+            (witness.a_x[j] + beta * DOMAIN[j] + gamma) * 
+            (witness.b_x[j] + beta * DOMAIN[j] * *K1 + gamma) * 
+            (witness.c_x[j] + beta * DOMAIN[j] * *K2 + gamma);
 
-    let mut lox: [Fr; N] = [Fr::zero(); N];
+        let denominator: Field = 
+            (witness.a_x[j] + beta * evaluate_polynomial(&S_A, DOMAIN[j]) + gamma) * 
+            (witness.b_x[j] + beta * evaluate_polynomial(&S_B, DOMAIN[j]) + gamma) * 
+            (witness.c_x[j] + beta * evaluate_polynomial(&S_C, DOMAIN[j]) + gamma);
 
-    for i in 1..N{
-        let lx:[Fr; N] = lagrange_poly(i, &DOMAIN);
+        let denom_inv: Field = denominator.inverse().unwrap();
 
+        let fraction: Field = numerator * denom_inv;
 
-        let mut f: Fr = Fr::one();
-        for j in 0..i {
-            let numer: Fr = 
-                (witness.a_x[j] + beta * DOMAIN[j] + gamma) * 
-                (witness.b_x[j] + beta * DOMAIN[j] * *K1 + gamma) * 
-                (witness.c_x[j] + beta * DOMAIN[j] * *K2 + gamma);
-
-            let denom: Fr = 
-                (witness.a_x[j] + beta * evaluate_polynomial(&S_A, DOMAIN[j]) + gamma) * 
-                (witness.b_x[j] + beta * evaluate_polynomial(&S_B, DOMAIN[j]) + gamma) * 
-                (witness.c_x[j] + beta * evaluate_polynomial(&S_C, DOMAIN[j]) + gamma);
-
-            let denom_inv: Fr = denom.inverse().unwrap();
-
-            let fraction: Fr = numer * denom_inv;
-
-            f *= fraction;
-        }
-
-        lox = add(&lox, &scalar_mul(&lx, f));
+        f[j+1] = fraction * f[j];
     }
 
-    add(&l1x, &lox)
+    for i in 0..N{
+        zx = add(&zx, &scalar_mul(&lagrange_poly(i, &DOMAIN), f[i]));
+    }
+
+    zx
 }
 
 //arithmetic constraint part of t(x)Z_H(x)
-pub fn get_arithmetic_constraint_poly(ax: &[Fr; N+2], bx: &[Fr; N+2], cx: &[Fr; N+2], pi_x: &[Fr; N]) -> [Fr; 3*N + 2] {
-    let mut arithmetic_constraint_poly: [Fr; 3*N + 2] = [Fr::from(0u32); 3*N + 2];
+pub fn get_arithmetic_constraint_poly(ax: &[Field; N+2], bx: &[Field; N+2], cx: &[Field; N+2], pi_x: &[Field; N]) -> [Field; 3*N + 2] {
+    let mut arithmetic_constraint_poly: [Field; 3*N + 2] = [Field::zero(); 3*N + 2];
 
-    let axbx: [Fr; 2*N + 3] = polynomial_multiplication(ax, bx);
-    let axbxqm: [Fr; 3*N + 2] = polynomial_multiplication(&axbx, &Q_M);
-    let axql: [Fr; 2*N + 1] = polynomial_multiplication(ax, &Q_L);
-    let bxqr: [Fr; 2*N + 1] = polynomial_multiplication(bx, &Q_R);
-    let cxqo: [Fr; 2*N + 1] = polynomial_multiplication(cx, &Q_O);
+    let axbx: [Field; 2*N + 3] = polynomial_multiplication(ax, bx);
+    let axbxqm: [Field; 3*N + 2] = polynomial_multiplication(&axbx, &Q_M);
+    let axql: [Field; 2*N + 1] = polynomial_multiplication(ax, &Q_L);
+    let bxqr: [Field; 2*N + 1] = polynomial_multiplication(bx, &Q_R);
+    let cxqo: [Field; 2*N + 1] = polynomial_multiplication(cx, &Q_O);
 
     arithmetic_constraint_poly = add(&arithmetic_constraint_poly, &axbxqm);
     arithmetic_constraint_poly = add(&arithmetic_constraint_poly, &axql);
@@ -61,36 +56,36 @@ pub fn get_arithmetic_constraint_poly(ax: &[Fr; N+2], bx: &[Fr; N+2], cx: &[Fr; 
 }
 
 //permutation constraint part of t(x)Z_H(x)
-pub fn get_permutation_constraint_polynomial(alpha: Fr, beta: Fr, gamma: Fr, ax: &[Fr; N+2], bx: &[Fr; N+2], cx: &[Fr; N+2], zx: &[Fr; N+3]) -> [Fr; 4*N + 6] {
+pub fn get_permutation_constraint_polynomial(alpha: Field, beta: Field, gamma: Field, ax: &[Field; N+2], bx: &[Field; N+2], cx: &[Field; N+2], zx: &[Field; N+3]) -> [Field; 4*N + 6] {
 
-    let axbx: [Fr; 2*N + 3] = 
-        polynomial_multiplication(&add_three_poly(ax, &[Fr::zero(), beta], &[gamma]), 
-        &add_three_poly(bx, &[Fr::zero(), beta * *K1], &[gamma]));
+    let axbx: [Field; 2*N + 3] = 
+        polynomial_multiplication(&add_three_poly(ax, &[Field::zero(), beta], &[gamma]), 
+        &add_three_poly(bx, &[Field::zero(), beta * *K1], &[gamma]));
 
-    let cxzx: [Fr; 2*N + 4] = 
-        polynomial_multiplication(&add_three_poly(cx, &[Fr::zero(), beta * *K2], &[gamma]), &zx);
+    let cxzx: [Field; 2*N + 4] = 
+        polynomial_multiplication(&add_three_poly(cx, &[Field::zero(), beta * *K2], &[gamma]), &zx);
 
-    let alpha_axbxcxzx: [Fr; 4*N + 6] = 
+    let alpha_axbxcxzx: [Field; 4*N + 6] = 
         scalar_mul(&polynomial_multiplication(&axbx, &cxzx), alpha);
 
-    let mut zwx = [Fr::zero(); N+3];
+    let mut zwx = [Field::zero(); N+3];
     for i in 0..N+3 {
         zwx[i] = zx[i] * OMEGA.pow([i as u64]);
     }
 
-    let asxbsx: [Fr; 2*N+3] = 
+    let asxbsx: [Field; 2*N+3] = 
         polynomial_multiplication(
             &add_three_poly(ax, &scalar_mul(&S_A, beta), &[gamma]), 
             &add_three_poly(bx, &scalar_mul(&S_B, beta), &[gamma])
         );
 
-    let csxzwx: [Fr; 2*N + 4] = 
+    let csxzwx: [Field; 2*N + 4] = 
         polynomial_multiplication(
             &add_three_poly(cx, &scalar_mul(&S_C, beta), &[gamma]), 
             &zwx
         );
 
-    let alpha_asxbsxcsxzwx: [Fr; 4*N + 6] = 
+    let alpha_asxbsxcsxzwx: [Field; 4*N + 6] = 
         scalar_mul(
             &polynomial_multiplication(&asxbsx, &csxzwx), 
             alpha
@@ -99,18 +94,18 @@ pub fn get_permutation_constraint_polynomial(alpha: Fr, beta: Fr, gamma: Fr, ax:
     sub(&alpha_axbxcxzx, &alpha_asxbsxcsxzwx)
 }
 
-pub fn get_boundary_constraint_poly(alpha: Fr, zx: &[Fr; N+3]) -> [Fr; 2*N + 2] {
+pub fn get_boundary_constraint_poly(alpha: Field, zx: &[Field; N+3]) -> [Field; 2*N + 2] {
     scalar_mul(
         &polynomial_multiplication(
-            &sub(zx, &[Fr::one()]), 
+            &sub(zx, &[Field::one()]), 
             &lagrange_poly(0, &DOMAIN)
         ), 
         alpha * alpha)
 }
 
-pub fn get_linearisation_poly(a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, alpha: Fr, beta: Fr, gamma: Fr, zeta: Fr, z_omega_zeta: Fr, s1_zeta: Fr, s2_zeta: Fr, zx: &[Fr; N+3], pi_x: &[Fr; N], t_lo: &[Fr; N], t_mid: &[Fr; N], t_hi: &[Fr; N+6]) -> [Fr; N+6] {
+pub fn get_linearisation_poly(a_zeta: Field, b_zeta: Field, c_zeta: Field, alpha: Field, beta: Field, gamma: Field, zeta: Field, z_omega_zeta: Field, s1_zeta: Field, s2_zeta: Field, zx: &[Field; N+3], pi_x: &[Field; N], t_lo: &[Field; N], t_mid: &[Field; N], t_hi: &[Field; N+6]) -> [Field; N+6] {
 
-    let arithmetic_part: [Fr; N] = 
+    let arithmetic_part: [Field; N] = 
         add(
             &add_three_poly(
                 &scalar_mul(&Q_M, a_zeta * b_zeta), 
@@ -124,7 +119,7 @@ pub fn get_linearisation_poly(a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, alpha: Fr, bet
             )
         );
 
-    let permutation_part: [Fr; N+3] = 
+    let permutation_part: [Field; N+3] = 
         scalar_mul(
             &sub(
                 &scalar_mul(
@@ -138,22 +133,22 @@ pub fn get_linearisation_poly(a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, alpha: Fr, bet
             ), 
         alpha);
 
-    let boundary_part: [Fr; N+3] = 
+    let boundary_part: [Field; N+3] = 
         scalar_mul(
-            &sub(&zx, &[Fr::one()]), 
+            &sub(&zx, &[Field::one()]), 
             alpha * alpha * evaluate_polynomial(&lagrange_poly(0, &DOMAIN), zeta)
         );
 
-    let t_part: [Fr; N+6] = 
+    let t_part: [Field; N+6] = 
         scalar_mul(
             &add_three_poly(
                 &scalar_mul(&t_hi, zeta.pow([2*N as u64])), 
                 &scalar_mul(&t_mid, zeta.pow([N as u64])), 
                 &t_lo
             ), 
-            Fr::from(-1i32) * evaluate_polynomial(&ZH_X, zeta));
+            Field::from(-1i32) * evaluate_polynomial(&ZH_X, zeta));
 
-    let rx: [Fr; N+6] = 
+    let rx: [Field; N+6] = 
         add(
             &add(&t_part, &boundary_part), 
             &add(&permutation_part, &arithmetic_part)
@@ -162,27 +157,27 @@ pub fn get_linearisation_poly(a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, alpha: Fr, bet
     rx
 }
 
-pub fn get_opening_proof_poly_wz(rx: &[Fr; N+6], ax: &[Fr; N+2], bx: &[Fr; N+2], cx: &[Fr; N+2], zeta: Fr, a_zeta: Fr, b_zeta: Fr, c_zeta: Fr, s1_zeta: Fr, s2_zeta: Fr, v: Fr) -> [Fr; N+5] {
+pub fn get_opening_proof_poly_wz(rx: &[Field; N+6], ax: &[Field; N+2], bx: &[Field; N+2], cx: &[Field; N+2], zeta: Field, a_zeta: Field, b_zeta: Field, c_zeta: Field, s1_zeta: Field, s2_zeta: Field, v: Field) -> [Field; N+5] {
 
-    let mut numerator: [Fr; N+6] = *rx;
+    let mut numerator: [Field; N+6] = *rx;
     numerator = add(&numerator, &scalar_mul(&sub(&ax, &[a_zeta]), v.pow([1])));
     numerator = add(&numerator, &scalar_mul(&sub(&bx, &[b_zeta]), v.pow([2])));
     numerator = add(&numerator, &scalar_mul(&sub(&cx, &[c_zeta]), v.pow([3])));
     numerator = add(&numerator, &scalar_mul(&sub(&S_A, &[s1_zeta]), v.pow([4])));
     numerator = add(&numerator, &scalar_mul(&sub(&S_B, &[s2_zeta]), v.pow([5])));
 
-    let denom: [Fr; 2] = [Fr::from(-1i32) * zeta, Fr::one()];
+    let denom: [Field; 2] = [Field::from(-1i32) * zeta, Field::one()];
 
-    let w_z: [Fr; N+5] = polynomial_division(&numerator, &denom);
+    let w_z: [Field; N+5] = polynomial_division(&numerator, &denom);
 
     w_z
 
 }
 
-pub fn get_opening_proof_poly_wzomega(zx: &[Fr; N+3], zeta: Fr, z_omega_zeta: Fr) -> [Fr; N+2] {
-    let numerator: [Fr; N+3] = sub(&zx, &[z_omega_zeta]);
-    let denom: [Fr; 2] = [Fr::from(-1i32) * zeta * *OMEGA, Fr::one()];
+pub fn get_opening_proof_poly_wzomega(zx: &[Field; N+3], zeta: Field, z_omega_zeta: Field) -> [Field; N+2] {
+    let numerator: [Field; N+3] = sub(&zx, &[z_omega_zeta]);
+    let denom: [Field; 2] = [Field::from(-1i32) * zeta * *OMEGA, Field::one()];
 
-    let w_z_omega : [Fr; N+2] = polynomial_division(&numerator, &denom);
+    let w_z_omega : [Field; N+2] = polynomial_division(&numerator, &denom);
     w_z_omega
 }

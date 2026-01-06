@@ -1,7 +1,8 @@
 use blake2::{Blake2s256, Digest};
 use ark_serialize::CanonicalSerialize;
 use ark_ff::{PrimeField, BigInteger};
-use ark_bn254::{Fr, G1Projective};
+
+use crate::types::*;
 
 pub struct FiatShamir {
     transcript: Vec<u8>
@@ -16,21 +17,21 @@ impl FiatShamir {
         self.transcript.extend_from_slice(bytes);
     }
 
-    pub fn append_g1(&mut self, p: &G1Projective) {
+    pub fn append_g1(&mut self, p: &G1Point) {
         let mut bytes = Vec::new();
         p.serialize_compressed(&mut bytes).unwrap();
         self.update(&bytes);
     }
 
-    pub fn append_fr(&mut self, x: &Fr) {
+    pub fn append_field(&mut self, x: &Field) {
         let bytes = x.into_bigint().to_bytes_le();
         self.update(&bytes);
     }
 
-    pub fn challenge(&mut self) -> Fr {
+    pub fn challenge(&mut self) -> Field {
         let hash = Blake2s256::digest(&self.transcript);
-        let chal = Fr::from_le_bytes_mod_order(&hash);
-        self.append_fr(&chal);
+        let chal = Field::from_le_bytes_mod_order(&hash);
+        self.append_field(&chal);
         chal
     }
 }
